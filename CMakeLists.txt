@@ -52,3 +52,4 @@ target_link_libraries(mettle_runner
 
 set_target_properties(mettle_runner PROPERTIES OUTPUT_NAME "mettle")
 
+add_subdirectory(test)
