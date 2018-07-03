@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import subprocess, os, argparse
 from lxml import etree
 
