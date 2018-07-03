@@ -1,4 +1,4 @@
-import subprocess, os, argparse
+import subprocess, os, argparse, sys
 from lxml import etree
 
 # Python has many, many bencode decoder libraries, and they are of generally
@@ -24,7 +24,7 @@ class JUnitEncoder:
 
     def started_run(self, event):
         self.suites = etree.Element('testsuites')
-        for attr in ['tests', 'failures', 'errors', 'time']:
+        for attr in ['tests', 'failures', 'errors', 'time', 'disabled']:
             self.suites.attrib[attr] = '0'
 
     def started_suite(self, event):
@@ -84,7 +84,7 @@ class JUnitEncoder:
             stderr = etree.SubElement(node, 'system-err')
             stderr.text = output[b'stderr_log'].decode('ascii').strip()
 
-def run_test_file(test_file, xml_output):
+def run_test_file(test_file, xml_output, print_wire = False):
     encode = JUnitEncoder()
     read_mettle_fd, write_mettle_fd = os.pipe()
     mettle_args = [test_file, '--output-fd={}'.format(write_mettle_fd)]
@@ -94,26 +94,30 @@ def run_test_file(test_file, xml_output):
         event = { b'event': None }
         while event[b'event'] != b'ended_run':
             event = better_bencode.load(read_mettle_wireprotocol)
+            if print_wire:
+                print(event, file=sys.stderr)
             encode(event)
         proc.wait()
-               
+
     os.close(read_mettle_fd)
     os.close(write_mettle_fd)
-    
+
     xml = etree.tostring(encode.suites, pretty_print=True, xml_declaration=True, encoding='UTF-8')
     open(xml_output, 'w').write(xml.decode('utf-8'))
     print('Wrote {}'.format(xml_output))
-    
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
             description='Mettle test runner for writing JUnit XML output')
     parser.add_argument('file', type=str, nargs='+', help='Mettle unittest executable')
-    parser.add_argument('--output', type=str, help='output XML directory', 
-            default='reports')
+    parser.add_argument('--output', type=str, help='output XML directory', default='reports')
+    parser.add_argument('--wire', help='log wire protocol events to console')
     args = parser.parse_args()
-    
+
+    os.makedirs(args.output, exist_ok=True)
+
     for test_file in args.file:
         xml_output = '{}/{}.xml'.format(args.output, os.path.basename(test_file))
-        run_test_file(test_file, xml_output)
+        run_test_file(test_file, xml_output, print_wire=args.wire)
 
 
