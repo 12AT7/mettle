@@ -7,5 +7,11 @@ foreach(TEST ${TEST_SRC})
 		${CMAKE_SOURCE_DIR}/src/mettle/test_file.cpp
 		${CMAKE_SOURCE_DIR}/src/mettle/run_test_files.cpp
 		)
-	target_link_libraries(${TEST_TARGET} mettle)
+	target_link_libraries(${TEST_TARGET} libmettle)
+	add_dependencies(${TEST_TARGET} bencode)
+	target_include_directories(${TEST_TARGET}
+		PRIVATE
+		${CMAKE_CURRENT_BINARY_DIR}/../include
+		)
+
 endforeach()
