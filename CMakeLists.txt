@@ -9,9 +9,9 @@ find_package(Threads REQUIRED)
 # CMake realize it is a transient artifact.
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/bencode.hpp"
-	COMMAND python ${CMAKE_SOURCE_DIR}/scripts/vendorize_bencode.py
-	COMMAND mv ${CMAKE_SOURCE_DIR}/include/bencode.hpp ${CMAKE_CURRENT_BINARY_DIR}/include
-	DEPENDS ${CMAKE_SOURCE_DIR}/scripts/vendorize_bencode.py
+	COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/scripts/vendorize_bencode.py
+	COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/include/bencode.hpp ${CMAKE_CURRENT_BINARY_DIR}/include
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/vendorize_bencode.py
 	COMMENT "Download bencode.hpp"
 	VERBATIM
 	)
