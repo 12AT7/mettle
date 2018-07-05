@@ -2,18 +2,20 @@ cmake_minimum_required(VERSION 3.2)
 project(Mettle LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 
-find_file(CONAN_BUILDINFO NAMES conanbuildinfo.cmake PATHS ${CMAKE_BINARY_DIR})
-if (CONAN_BUILDINFO)
-    include(${CONAN_BUILDINFO})
-    conan_basic_setup(TARGETS)
-else(CONAN_BUILDINFO)
-    find_package(Boost REQUIRED COMPONENTS program_options filesystem iostreams)
-endif(CONAN_BUILDINFO)
-
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/bencode.hpp/include)
-
+find_package(Boost REQUIRED COMPONENTS program_options filesystem iostreams)
 find_package(Threads REQUIRED)
+
+# Download bencode.hpp, but keep it in the binary directory so both Git and
+# CMake realize it is a transient artifact.
+add_custom_command(
+	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/bencode.hpp"
+	COMMAND python ${CMAKE_SOURCE_DIR}/scripts/vendorize_bencode.py
+	COMMAND mv ${CMAKE_SOURCE_DIR}/include/bencode.hpp ${CMAKE_CURRENT_BINARY_DIR}/include
+	DEPENDS ${CMAKE_SOURCE_DIR}/scripts/vendorize_bencode.py
+	COMMENT "Download bencode.hpp"
+	VERBATIM
+	)
+add_custom_target(bencode DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/include/bencode.hpp")
 
 file(GLOB LIBRARY_SRC
     "src/libmettle/*.cpp"
@@ -37,16 +39,18 @@ else (UNIX)
     message(FATAL_ERROR "Mettle CMakeLists.txt supported only on Posix for now")
 endif (UNIX)
 
-add_library(mettle SHARED ${LIBRARY_SRC} ${PLATFORM_SRC})
-target_include_directories(mettle
+add_library(libmettle SHARED ${LIBRARY_SRC} ${PLATFORM_SRC})
+add_dependencies(libmettle bencode)
+target_include_directories(libmettle
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+	${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
-target_link_libraries(mettle
+target_link_libraries(libmettle
     PUBLIC
         Boost::program_options Boost::iostreams Threads::Threads
 )
@@ -56,9 +60,15 @@ file(GLOB EXECUTABLE_SRC
 	"src/mettle/posix/*.cpp"
 	)
 
-add_executable(mettle_runner ${EXECUTABLE_SRC})
-target_link_libraries(mettle_runner
-	mettle Boost::program_options Boost::iostreams Threads::Threads)
+add_executable(mettle ${EXECUTABLE_SRC})
+add_dependencies(mettle bencode)
 
-set_target_properties(mettle_runner PROPERTIES OUTPUT_NAME "mettle")
+target_include_directories(mettle
+    PRIVATE
+	${CMAKE_CURRENT_BINARY_DIR}/include
+)
 
+target_link_libraries(mettle
+	libmettle Boost::program_options Boost::iostreams Threads::Threads)
+
+add_subdirectory(test)
