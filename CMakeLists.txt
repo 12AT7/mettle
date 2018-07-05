@@ -71,4 +71,6 @@ target_include_directories(mettle
 target_link_libraries(mettle
 	libmettle Boost::program_options Boost::iostreams Threads::Threads)
 
-add_subdirectory(test)
+if (BUILD_TESTING)
+    add_subdirectory(test)
+endif (BUILD_TESTING)
