@@ -8,14 +8,14 @@ find_package(Threads REQUIRED)
 # Download bencode.hpp, but keep it in the binary directory so both Git and
 # CMake realize it is a transient artifact.
 add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/bencode.hpp"
+	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generated/bencode.hpp"
 	COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/scripts/vendorize_bencode.py
-	COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/include/bencode.hpp ${CMAKE_CURRENT_BINARY_DIR}/include
+	COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/include/bencode.hpp ${CMAKE_CURRENT_BINARY_DIR}/generated
 	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/vendorize_bencode.py
 	COMMENT "Download bencode.hpp"
 	VERBATIM
 	)
-add_custom_target(bencode DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/include/bencode.hpp")
+add_custom_target(bencode DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/generated/bencode.hpp")
 
 file(GLOB LIBRARY_SRC
     "src/libmettle/*.cpp"
@@ -47,7 +47,7 @@ target_include_directories(libmettle
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-	${CMAKE_CURRENT_BINARY_DIR}/include
+	${CMAKE_CURRENT_BINARY_DIR}/generated
 )
 
 target_link_libraries(libmettle
@@ -65,7 +65,7 @@ add_dependencies(mettle bencode)
 
 target_include_directories(mettle
     PRIVATE
-	${CMAKE_CURRENT_BINARY_DIR}/include
+	${CMAKE_CURRENT_BINARY_DIR}/generated
 )
 
 target_link_libraries(mettle
