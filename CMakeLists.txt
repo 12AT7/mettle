@@ -54,6 +54,7 @@ target_link_libraries(libmettle
     PUBLIC
         Boost::program_options Boost::iostreams Threads::Threads
 )
+set_target_properties(libmettle PROPERTIES OUTPUT_NAME "mettle")
 
 file(GLOB EXECUTABLE_SRC
 	"src/mettle/*.cpp"
