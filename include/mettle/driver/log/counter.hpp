@@ -1,5 +1,5 @@
-#ifndef INC_METTLE_DRIVER_LOG_VERBOSE_HPP
-#define INC_METTLE_DRIVER_LOG_VERBOSE_HPP
+#ifndef INC_METTLE_DRIVER_LOG_COUNTER_HPP
+#define INC_METTLE_DRIVER_LOG_COUNTER_HPP
 
 #include <cstdint>
 
@@ -17,10 +17,9 @@ namespace mettle {
 
 namespace log {
 
-  class METTLE_PUBLIC verbose : public file_logger {
+  class METTLE_PUBLIC counter : public file_logger {
   public:
-    verbose(indenting_ostream &out, std::size_t runs, bool show_time,
-            bool show_terminal);
+    counter(indenting_ostream &out);
 
     void started_run() override;
     void ended_run() override;
@@ -43,14 +42,10 @@ namespace log {
     void failed_file(const std::string &file,
                      const std::string &message) override;
   private:
-    void log_time(test_duration duration) const;
-    void summarize_output(const test_output &output) const;
-    void log_output(const test_output &output, bool extra_newline) const;
+    void print_counter();
 
     indenting_ostream &out_;
-    indenter indent_, run_indent_;
-    std::size_t total_runs_, run_ = 0;
-    bool first_ = true, show_time_, show_terminal_;
+    std::size_t tests_ = 0, passes_ = 0, skips_ = 0, failures_ = 0;
   };
 
 }

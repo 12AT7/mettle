@@ -1,10 +1,14 @@
-#ifndef INC_METTLE_DRIVER_LOG_VERBOSE_HPP
-#define INC_METTLE_DRIVER_LOG_VERBOSE_HPP
+#ifndef INC_METTLE_DRIVER_LOG_XUNIT_HPP
+#define INC_METTLE_DRIVER_LOG_XUNIT_HPP
 
 #include <cstdint>
+#include <memory>
+#include <ostream>
+#include <stack>
 
 #include "core.hpp"
 #include "indent.hpp"
+#include "xml.hpp"
 #include "../detail/export.hpp"
 
 // Ignore warnings from MSVC about DLL interfaces.
@@ -17,10 +21,11 @@ namespace mettle {
 
 namespace log {
 
-  class METTLE_PUBLIC verbose : public file_logger {
+  class METTLE_PUBLIC xunit : public file_logger {
   public:
-    verbose(indenting_ostream &out, std::size_t runs, bool show_time,
-            bool show_terminal);
+    xunit(std::string filename, std::size_t runs);
+    // Exposed only for tests.
+    xunit(std::unique_ptr<std::ostream> stream, std::size_t runs);
 
     void started_run() override;
     void ended_run() override;
@@ -43,14 +48,26 @@ namespace log {
     void failed_file(const std::string &file,
                      const std::string &message) override;
   private:
-    void log_time(test_duration duration) const;
-    void summarize_output(const test_output &output) const;
-    void log_output(const test_output &output, bool extra_newline) const;
+    struct suite_stack_item {
+      suite_stack_item(std::string name)
+        : elt{xml::element::make("testsuite")} {
+        elt->attr("name", std::move(name));
+      }
 
-    indenting_ostream &out_;
-    indenter indent_, run_indent_;
-    std::size_t total_runs_, run_ = 0;
-    bool first_ = true, show_time_, show_terminal_;
+      suite_stack_item(suite_stack_item &&) = default;
+
+      xml::element_ptr elt;
+      std::size_t failures{0}, skips{0};
+      test_duration duration{0};
+    };
+
+    suite_stack_item & current_suite();
+
+    std::unique_ptr<std::ostream> out_;
+    xml::document doc_;
+    std::stack<suite_stack_item> suite_stack_;
+    std::size_t tests_{0}, failures_{0}, skips_{0};
+    test_duration duration_{0};
   };
 
 }
