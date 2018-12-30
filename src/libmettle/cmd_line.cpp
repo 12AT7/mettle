@@ -76,6 +76,7 @@ bool color_enabled(color_option opt, int fd) {
     return true;
   default:
     assert(false && "unexpected value");
+    return false;
   }
 }
 
