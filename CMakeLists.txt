@@ -84,6 +84,7 @@ install(EXPORT mettle-targets
 	FILE MettleTargets.cmake
 	NAMESPACE mettle::
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Mettle
+	)
 
 if (BUILD_TESTING)
     add_subdirectory(test)
