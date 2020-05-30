@@ -80,7 +80,7 @@ install(TARGETS libmettle
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	PUBLIC_HEADER DESTINATION include
 	)
-install(EXPORT libmettle
+install(EXPORT mettle::mettle
 	FILE MettleTargets.cmake
 	NAMESPACE mettle::
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Mettle
