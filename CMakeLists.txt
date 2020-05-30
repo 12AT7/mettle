@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-project(Mettle LANGUAGES CXX)
+project(mettle VERSION 0.2 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(Boost REQUIRED COMPONENTS program_options filesystem iostreams)
@@ -16,6 +16,7 @@ add_custom_command(
 	VERBATIM
 	)
 add_custom_target(bencode DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/generated/bencode.hpp")
+add_compile_definitions("METTLE_VERSION=0.2")
 
 file(GLOB LIBRARY_SRC
     "src/libmettle/*.cpp"
@@ -71,6 +72,18 @@ target_include_directories(mettle
 
 target_link_libraries(mettle
 	libmettle Boost::program_options Boost::iostreams Threads::Threads)
+
+include(GNUInstallDirs)
+install(TARGETS libmettle
+	EXPORT mettle::mettle
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	PUBLIC_HEADER DESTINATION include
+	)
+install(EXPORT mettle-targets
+	FILE MettleTargets.cmake
+	NAMESPACE mettle::
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Mettle
 
 if (BUILD_TESTING)
     add_subdirectory(test)
