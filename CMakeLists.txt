@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.12)
 project(mettle VERSION 0.2 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
@@ -76,10 +76,11 @@ target_link_libraries(mettle
 include(GNUInstallDirs)
 install(TARGETS libmettle
 	EXPORT mettle::mettle
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	PUBLIC_HEADER DESTINATION include
+	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 	)
+install(FILES include DESTINATION include)
 install(EXPORT mettle::mettle
 	FILE MettleTargets.cmake
 	NAMESPACE mettle::
