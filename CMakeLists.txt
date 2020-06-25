@@ -73,9 +73,13 @@ target_include_directories(mettle
 target_link_libraries(mettle
 	libmettle Boost::program_options Boost::iostreams Threads::Threads)
 
+if (BUILD_TESTING)
+    add_subdirectory(test)
+endif (BUILD_TESTING)
+
 include(GNUInstallDirs)
 install(TARGETS libmettle
-	EXPORT mettle::mettle
+	EXPORT MettleTargets
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -84,12 +88,29 @@ install(
 	DIRECTORY "${CMAKE_SOURCE_DIR}/include" 
 	DESTINATION ${CMAKE_INSTALL_PREFIX}
 	)
-install(EXPORT mettle::mettle
-	FILE MettleTargets.cmake
+install(EXPORT MettleTargets
+	FILE MettleConfig.cmake
 	NAMESPACE mettle::
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Mettle
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mettle
 	)
 
-if (BUILD_TESTING)
-    add_subdirectory(test)
-endif (BUILD_TESTING)
+# CMake sucks.  Nonetheless, this guy figured out some useful stuff: 
+# https://unclejimbo.github.io/2018/06/08/Modern-CMake-for-Library-Developers/
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+	${CMAKE_SOURCE_DIR}/cmake/MettleConfig.cmake.in
+	${CMAKE_BINARY_DIR}/cmake/MettleConfig.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mettle
+)
+write_basic_package_version_file(
+	${CMAKE_BINARY_DIR}/cmake/MettleConfigVersion.cmake
+	VERSION ${METTLE_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+install(
+    FILES
+	${CMAKE_BINARY_DIR}/cmake/MettleConfig.cmake
+	${CMAKE_BINARY_DIR}/cmake/MettleConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mettle
+)
+
