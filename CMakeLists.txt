@@ -82,7 +82,7 @@ install(TARGETS libmettle
 	)
 install(
 	DIRECTORY "${CMAKE_SOURCE_DIR}/include" 
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+	DESTINATION ${CMAKE_INSTALL_PREFIX}
 	)
 install(EXPORT mettle::mettle
 	FILE MettleTargets.cmake
