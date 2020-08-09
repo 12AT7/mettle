@@ -78,7 +78,7 @@ if (BUILD_TESTING)
 endif (BUILD_TESTING)
 
 include(GNUInstallDirs)
-install(TARGETS libmettle
+install(TARGETS libmettle mettle
 	EXPORT MettleTargets
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
