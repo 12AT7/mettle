@@ -7,11 +7,16 @@ in progress
 ### New features
 - Interleave skipped and failed tests in their original order in the summary log
 - Capturing large arrays of trivial types for matchers is now much faster
+- `expect` now takes a universal reference for the value to test to support
+  matchers which need access to non-const objects (e.g. to call a non-const
+  member function)
 
 ### Bug fixes
 - Test failures across multiple runs are now correctly groups in the summary
   results
 - `bencode.hpp` is now installed alongside mettle when `--vendorize` is used
+- Arithmetic matchers now use ADL to find `max` and `abs`, allowing custom
+  arithmetic types to use their own implementations of these functions
 
 ### Breaking changes
 - Implementation updated to require C++17
