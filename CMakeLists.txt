@@ -5,6 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Boost REQUIRED COMPONENTS program_options filesystem iostreams)
 find_package(Threads REQUIRED)
 
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 # Download bencode.hpp, but keep it in the binary directory so both Git and
 # CMake realize it is a transient artifact.
 add_custom_command(
@@ -30,7 +35,7 @@ if (UNIX)
     	"src/libmettle/log/posix/*.cpp"
 	)
 elseif (WIN32)
-    message(FATAL_ERROR "Mettle CMakeLists.txt not tested on Windows (although Mettle itself is")
+    message(FATAL_ERROR "Mettle CMakeLists.txt not tested on Windows (although Mettle itself is)")
     file(GLOB PLATFORM_SRC
     	"src/libmettle/windows/*.cpp"
     	"src/windows/*.cpp"
