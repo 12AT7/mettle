@@ -12,15 +12,15 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # Download bencode.hpp, but keep it in the binary directory so both Git and
 # CMake realize it is a transient artifact.
-add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generated/bencode.hpp"
-	COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/scripts/vendorize_bencode.py
-	COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/include/bencode.hpp ${CMAKE_CURRENT_BINARY_DIR}/generated
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/vendorize_bencode.py
-	COMMENT "Download bencode.hpp"
-	VERBATIM
-	)
-add_custom_target(bencode DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/generated/bencode.hpp")
+# add_custom_command(
+# 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generated/bencode.hpp"
+# 	COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/scripts/vendorize_bencode.py
+# 	COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/include/bencode.hpp ${CMAKE_CURRENT_BINARY_DIR}/generated
+# 	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/vendorize_bencode.py
+# 	COMMENT "Download bencode.hpp"
+# 	VERBATIM
+# 	)
+# add_custom_target(bencode DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/generated/bencode.hpp")
 add_compile_definitions("METTLE_VERSION=0.2")
 
 file(GLOB LIBRARY_SRC
