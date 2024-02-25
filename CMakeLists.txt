@@ -69,7 +69,6 @@ file(GLOB EXECUTABLE_SRC
 
 add_executable(mettle ${EXECUTABLE_SRC})
 # add_dependencies(mettle bencode)
-add_dependencies(mettle)
 
 target_include_directories(mettle
     PRIVATE
