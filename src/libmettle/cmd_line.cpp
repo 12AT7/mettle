@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstdlib>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
@@ -38,20 +39,14 @@ namespace mettle {
     using namespace boost::program_options;
     options_description desc("Driver options");
     desc.add_options()
-      ("timeout,t", value(&opts.timeout)->value_name("TIME"), "timeout in ms")
+      ("attr,a", value(&opts.filters.by_attr)->value_name("ATTR[=VALUE]"),
+       "attributes of tests to run")
       ("test,T", value(&opts.filters.by_name)->value_name("REGEX"),
        "regex matching names of tests to run")
-      ("attr,a", value(&opts.filters.by_attr)->value_name("ATTR"),
-       "attributes of tests to run")
+      ("timeout,t", value(&opts.timeout)->value_name("MS"), "timeout in ms")
     ;
     return desc;
   }
-
-// MSVC doesn't understand [[noreturn]], so just ignore the warning here.
-#if defined(_MSC_VER) && !defined(__clang__)
-#  pragma warning(push)
-#  pragma warning(disable:4715)
-#endif
 
   bool color_enabled(color_option opt, int fd) {
     switch(opt) {
@@ -67,12 +62,9 @@ namespace mettle {
       return true;
     default:
       assert(false && "unexpected value");
+      std::abort();
     }
   }
-
-#if defined(_MSC_VER) && !defined(__clang__)
-#  pragma warning(pop)
-#endif
 
   boost::program_options::options_description
   make_output_options(output_options &opts, const logger_factory &factory) {
@@ -85,20 +77,20 @@ namespace mettle {
 
     options_description desc("Output options");
     desc.add_options()
-      ("output,o", value(&opts.output)->value_name("FORMAT"), ss.str().c_str())
       ("color", value(&opts.color)->value_name("WHEN"),
        "show colored output (one of: never, auto, always; default: auto)")
       (",c", value(&opts.color)->zero_tokens()
             ->implicit_value(color_option::always, "always"),
        "show colored output (equivalent to `--color=always`)")
+      ("file,f", value(&opts.file)->value_name("FILE"),
+       ("file to print test results to (for xunit only; default: " + opts.file +
+        ")").c_str())
+      ("output,o", value(&opts.output)->value_name("FORMAT"), ss.str().c_str())
       ("runs,n", value(&opts.runs)->value_name("N"), "number of test runs")
       ("show-terminal", value(&opts.show_terminal)->zero_tokens(),
        "show terminal output for each test")
       ("show-time", value(&opts.show_time)->zero_tokens(),
        "show the duration for each test")
-      ("file,f", value(&opts.file)->value_name("FILE"),
-       ("file to print test results to (for xunit only; default: " + opts.file +
-        ")").c_str())
     ;
     return desc;
   }

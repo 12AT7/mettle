@@ -7,13 +7,15 @@
 
 #include "core.hpp"
 #include "result.hpp"
-#include "detail/source_location.hpp"
+#include "../detail/source_location.hpp"
 
 #ifndef METTLE_NO_MACROS
 #  ifdef METTLE_NO_SOURCE_LOCATION
 #    define METTLE_EXPECT(...) ::mettle::expect(                     \
        __VA_ARGS__,                                                  \
-       METTLE_SOURCE_LOCATION::current(__FILE__, __func__, __LINE__) \
+       ::mettle::detail::source_location::current(                   \
+         __FILE__, __func__, __LINE__                                \
+       )                                                             \
      )
 #  else
 #    define METTLE_EXPECT(...) ::mettle::expect(__VA_ARGS__)
@@ -29,7 +31,8 @@ namespace mettle {
   template<typename T, typename Matcher,
            typename = std::enable_if_t< is_matcher_v<Matcher> >>
   void expect(T &&value, const Matcher &matcher,
-              METTLE_SOURCE_LOCATION loc = METTLE_SOURCE_LOCATION::current()) {
+              detail::source_location loc =
+                detail::source_location::current()) {
     auto m = matcher(value);
     if(m == false) {
       std::ostringstream ss;
@@ -44,7 +47,8 @@ namespace mettle {
   template<typename T, typename Matcher,
            typename = std::enable_if_t< is_matcher_v<Matcher> >>
   void expect(const std::string &desc, T &&value, const Matcher &matcher,
-              METTLE_SOURCE_LOCATION loc = METTLE_SOURCE_LOCATION::current()) {
+              detail::source_location loc =
+                detail::source_location::current()) {
     auto m = matcher(value);
     if(m == false) {
       std::ostringstream ss;

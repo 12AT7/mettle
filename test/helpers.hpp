@@ -6,6 +6,9 @@
 #include <mettle/driver/filters.hpp>
 #include <mettle/driver/test_name.hpp>
 
+#include <cassert>
+#include <cstdlib>
+
 #include <boost/any.hpp>
 
 namespace mettle {
@@ -21,12 +24,6 @@ namespace mettle {
     return ss.str();
   }
 
-// MSVC doesn't understand [[noreturn]], so just ignore the warning here.
-#if defined(_MSC_VER) && !defined(__clang__)
-#  pragma warning(push)
-#  pragma warning(disable:4715)
-#endif
-
   std::string to_printable(const test_action &action) {
     switch(action) {
     case test_action::run:
@@ -39,12 +36,9 @@ namespace mettle {
       return "attr_action::indeterminate";
     default:
       assert(false && "unexpected value");
+      std::abort();
     }
   }
-
-#if defined(_MSC_VER) && !defined(__clang__)
-#  pragma warning(pop)
-#endif
 
   std::string to_printable(const attr_filter_item &item) {
     return "filter_item(" + to_printable(item.attribute) + ")";

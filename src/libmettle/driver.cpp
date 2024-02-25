@@ -3,6 +3,7 @@
 #include <optional>
 #include <vector>
 
+#define NOMINMAX
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/program_options.hpp>
@@ -163,7 +164,7 @@ namespace mettle {
 
         logger.summarize();
         return logger.good() ? exit_code::success : exit_code::failure;
-      } catch(const std::out_of_range &e) {
+      } catch(const std::out_of_range &) {
         report_error(argv[0], "unknown output format \"" + args.output + "\"");
         return exit_code::bad_args;
       } catch(const std::exception &e) {

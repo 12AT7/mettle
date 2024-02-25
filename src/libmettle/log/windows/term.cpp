@@ -1,6 +1,7 @@
 #include <mettle/driver/log/term.hpp>
 
 #include <cassert>
+#include <cstdlib>
 #include <string>
 
 #include <windows.h>
@@ -29,12 +30,6 @@ namespace mettle::term {
       return ios.iword(console_flag) & 0xf0;
     }
 
-// MSVC doesn't understand [[noreturn]], so just ignore the warning here.
-#if defined(_MSC_VER) && !defined(__clang__)
-#  pragma warning(push)
-#  pragma warning(disable:4715)
-#endif
-
     int ansi_to_win_fg(int val) {
       switch(val) {
       case 30: return 0;
@@ -45,7 +40,7 @@ namespace mettle::term {
       case 35: return FOREGROUND_RED | FOREGROUND_BLUE;
       case 36: return FOREGROUND_GREEN | FOREGROUND_BLUE;
       case 37: return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-      default: assert(false && "disallowed color value");
+      default: assert(false && "disallowed color value"); std::abort();
       }
     }
 
@@ -59,13 +54,9 @@ namespace mettle::term {
       case 45: return BACKGROUND_RED | BACKGROUND_BLUE;
       case 46: return BACKGROUND_GREEN | BACKGROUND_BLUE;
       case 47: return BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE;
-      default: assert(false && "disallowed color value");
+      default: assert(false && "disallowed color value"); std::abort();
       }
     }
-
-#if defined(_MSC_VER) && !defined(__clang__)
-#  pragma warning(pop)
-#endif
 
     inline HANDLE dup(HANDLE h) {
       HANDLE proc = GetCurrentProcess();

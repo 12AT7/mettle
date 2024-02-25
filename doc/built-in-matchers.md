@@ -81,6 +81,16 @@ according to the `<` operator.
 A matcher that returns `true` when the actual value is less than or equal to
 `value` according to the `<=` operator.
 
+### in_interval(*low*, *high*[, *bounds*])
+
+A matcher that returns `true` when the actual value is between `low` and `high`.
+`bounds` can be one of the following:
+
+* `interval::closed`: expects `low <= actual <= high`
+* `interval::left_open`: expects `low < actual <= high`
+* `interval::right_open`: expects `low <= actual < high` (the default)
+* `interval::open`: expects `low < actual < high`
+
 ## Arithmetic
 *&lt;mettle/matchers/arithmetic.hpp&gt;*
 {: .subtitle}
@@ -233,6 +243,7 @@ expect([]() { throw std::runtime_error("uh oh"); },
 
 A matcher that returns `true` if an exception of type `Type` (or a subclass of
 `Type`) is thrown and whose `what()` member function matches `what_matcher`.
+This is equivalent to `thrown_raw<Type>(exception_what(what_matcher))`.
 
 ### thrown<*Type*>()
 
@@ -242,6 +253,11 @@ A matcher that returns `true` if an exception of type `Type` (or a subclass of
 ### thrown()
 
 A matcher that returns `true` if an exception of *any* type `Type` is thrown.
+
+### exception_what(*what_matcher*)
+
+A matcher that returns `true` if the value is an exception whose `what()` member
+function matching `what_matcher`.
 
 ### thrown_raw<*Type*>(*matcher*)
 

@@ -3,10 +3,12 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/wait.h>
 
 #include <sstream>
 
+#include <mettle/detail/source_location.hpp>
 #include <mettle/driver/exit_code.hpp>
 #include <mettle/driver/posix/scoped_pipe.hpp>
 #include <mettle/driver/posix/scoped_signal.hpp>
@@ -20,8 +22,13 @@
 #  define EXIT_FUNC exit
 #endif
 
-// XXX: Use std::source_location instead when we're able.
-#define PARENT_FAILED() parent_failed(__FILE__, __LINE__)
+#ifdef METTLE_NO_SOURCE_LOCATION
+#  define PARENT_FAILED() parent_failed(                                      \
+     ::mettle::detail::source_location::current(__FILE__, __func__, __LINE__) \
+   )
+#else
+#  define PARENT_FAILED() parent_failed()
+#endif
 
 namespace mettle {
 
@@ -43,13 +50,14 @@ namespace mettle {
 
     void sig_chld(int) {}
 
-    test_result parent_failed(const char *file, std::size_t line) {
+    test_result parent_failed(detail::source_location loc =
+                                detail::source_location::current()) {
       if(test_pgid)
         killpg(test_pgid, SIGKILL);
       test_pgid = 0;
 
       std::ostringstream ss;
-      ss << "Fatal error at " << file << ":" << line << "\n"
+      ss << "Fatal error at " << loc.file_name() << ":" << loc.line() << "\n"
          << err_string(errno);
       return { false, err_string(errno) };
     }

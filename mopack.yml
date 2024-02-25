@@ -1,0 +1,8 @@
+export:
+  build: bfg9000
+
+packages:
+  bencodehpp:
+    origin: git
+    repository: https://github.com/jimporter/bencode.hpp.git
+    tag: v1.0.0

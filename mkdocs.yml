@@ -2,14 +2,11 @@ site_name: mettle
 docs_dir: doc
 repo_url: https://github.com/jimporter/mettle/
 edit_uri: ""
-copyright: Copyright &copy; 2014-2021 Jim Porter
+copyright: Copyright &copy; 2014-2023 Jim Porter
 
-theme: yeti
+theme: yeti-classic
 extra_css:
   - css/extra.css
-  - css/version-select.css
-extra_javascript:
-  - js/version-select.js
 
 markdown_extensions:
   - admonition
