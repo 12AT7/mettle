@@ -1,7 +1,9 @@
 #ifndef INC_METTLE_OUTPUT_TO_PRINTABLE_HPP
 #define INC_METTLE_OUTPUT_TO_PRINTABLE_HPP
 
+#include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <locale>
 #include <iomanip>
 #include <sstream>
@@ -26,76 +28,79 @@ namespace mettle {
   }
 
   template<typename Char, typename Traits, typename Alloc>
-  inline std::string
-  to_printable(const std::basic_string<Char, Traits, Alloc> &s) {
-    return escape_string(string_convert(s));
+  inline std::string to_printable(
+    const std::basic_string<Char, Traits, Alloc> &s
+  ) requires string_convertible<std::basic_string<Char, Traits, Alloc>> {
+    return represent_string(s);
   }
 
   template<typename Char, typename Traits>
-  inline std::string
-  to_printable(const std::basic_string_view<Char, Traits> &s) {
-    return escape_string(string_convert(s));
+  inline std::string to_printable(
+    const std::basic_string_view<Char, Traits> &s
+  ) requires string_convertible<std::basic_string_view<Char, Traits>> {
+    return represent_string(s);
   }
 
   inline std::string to_printable(char c) {
-    return escape_string(std::string(1, c), '\'');
-  }
-
-  inline std::string to_printable(unsigned char c) {
-    return escape_string(std::string(1, c), '\'');
-  }
-
-  inline std::string to_printable(signed char c) {
-    return escape_string(std::string(1, c), '\'');
+    return represent_string(std::string(1, c), '\'');
   }
 
   inline std::string to_printable(wchar_t c) {
-    return escape_string(string_convert(std::wstring(1, c)), '\'');
+    return represent_string(std::wstring(1, c), '\'');
+  }
+
+  inline std::string to_printable(char8_t c) {
+    return represent_string(std::u8string(1, c), '\'');
   }
 
   inline std::string to_printable(char16_t c) {
-    return escape_string(string_convert(std::u16string(1, c)), '\'');
+    return represent_string(std::u16string(1, c), '\'');
   }
 
   inline std::string to_printable(char32_t c) {
-    return escape_string(string_convert(std::u32string(1, c)), '\'');
+    return represent_string(std::u32string(1, c), '\'');
   }
 
-  inline std::string to_printable(const char *s) {
-    if(!s) return detail::null_str();
-    return escape_string(s);
+  inline std::string to_printable(unsigned char c) {
+    std::ostringstream ss;
+    ss << "0x" << std::setw(2) << std::setfill('0') << std::hex
+       << static_cast<unsigned int>(c);
+    return ss.str();
   }
 
-  inline std::string to_printable(const unsigned char *s) {
-    if(!s) return detail::null_str();
-    return escape_string(reinterpret_cast<const char*>(s));
+  inline std::string to_printable(signed char c) {
+    std::ostringstream ss;
+    ss << (c >= 0 ? '+' : '-') << "0x" << std::setw(2) << std::setfill('0')
+       << std::hex << std::abs(static_cast<int>(c));
+    return ss.str();
   }
 
-  inline std::string to_printable(const signed char *s) {
-    if(!s) return detail::null_str();
-    return escape_string(reinterpret_cast<const char*>(s));
+  inline std::string to_printable(std::byte b) {
+    return to_printable(static_cast<unsigned char>(b));
   }
 
-  inline std::string to_printable(const wchar_t *s) {
-    if(!s) return detail::null_str();
-    return escape_string(string_convert(s));
-  }
-
-  inline std::string to_printable(const char16_t *s) {
-    if(!s) return detail::null_str();
-    return escape_string(string_convert(s));
-  }
-
-  inline std::string to_printable(const char32_t *s) {
-    if(!s) return detail::null_str();
-    return escape_string(string_convert(s));
-  }
+  // Pointers
 
   template<typename T>
-  inline auto to_printable(T *t) -> std::enable_if_t<
-    is_any_char_v<T>, std::string
-  > {
-    return to_printable(const_cast<const T *>(t));
+  // Prevent array->pointer decay here.
+  std::string to_printable(const T &t) requires(std::is_pointer_v<T>) {
+    if(!t) return to_printable(nullptr);
+
+    using ValueType = const std::remove_pointer_t<T>;
+    std::ostringstream ss;
+    if constexpr(character<ValueType>) {
+      return represent_string(t);
+    } else {
+      std::ostringstream ss;
+      if constexpr(std::same_as<ValueType, const unsigned char> ||
+                   std::same_as<ValueType, const signed char>) {
+        // Don't print signed/unsigned char* as regular strings.
+        ss << static_cast<const void *>(t);
+      } else {
+        ss << t;
+      }
+      return ss.str();
+    }
   }
 
   template<typename Ret, typename ...Args>
@@ -103,7 +108,21 @@ namespace mettle {
     return type_name<Ret(Args...)>();
   }
 
-  // Containers
+  // Other scalars
+
+  template<typename T>
+  std::string to_printable(const T &t) requires(std::is_enum_v<T>) {
+    return type_name<T>() + "(" + std::to_string(
+      static_cast<std::underlying_type_t<T>>(t)
+    ) + ")";
+  }
+
+  template<typename T>
+  auto to_printable(const T &t) requires(std::same_as<T, bool>) {
+    return t ? "true" : "false";
+  }
+
+  // Collections
 
   namespace detail {
     template<typename T>
@@ -120,32 +139,27 @@ namespace mettle {
     return detail::stringify_tuple(tuple);
   }
 
-  template<typename T, std::size_t N>
-  auto to_printable(T (&v)[N]) -> std::enable_if_t<
-    !is_any_char_v<T>, std::string
-  > {
-    return to_printable(std::begin(v), std::end(v));
+  template<character Char, std::size_t N>
+  std::string to_printable(const Char (&s)[N]) {
+    return to_printable(static_cast<const Char *>(s));
   }
 
-  // The main `to_printable` implementation. This needs to be after the
-  // non-generic versions above so that those overloads get picked up by the
-  // calls inside this function.
+  template<typename T, std::size_t N>
+  std::string to_printable(const T (&t)[N]) {
+    return to_printable(std::begin(t), std::end(t));
+  }
+
+  // Fallback implementation. Try to print various types in a reasonable way.
 
   template<typename T>
   inline auto to_printable(const T &t) {
-    if constexpr(std::is_enum_v<T>) {
-      return type_name<T>() + "(" + std::to_string(
-        static_cast<typename std::underlying_type<T>::type>(t)
-      ) + ")";
-    } else if constexpr(std::is_same_v<std::remove_cv_t<T>, bool>) {
-      return t ? "true" : "false";
-    } else if constexpr(is_printable_v<T>) {
+    if constexpr(printable<T>) {
       return t;
-    } else if constexpr(is_exception_v<T>) {
+    } else if constexpr(any_exception<T>) {
       std::ostringstream ss;
       ss << type_name(t) << "(" << to_printable(t.what()) << ")";
       return ss.str();
-    } else if constexpr(is_iterable_v<T>) {
+    } else if constexpr(iterable<T>) {
       return to_printable(std::begin(t), std::end(t));
     } else {
       return type_name<T>();
@@ -154,6 +168,11 @@ namespace mettle {
 
   // These need to be last in order for the `to_printable()` calls inside to
   // pick up all the above implementations (plus any others via ADL).
+
+  template<typename T>
+  inline auto to_printable(const volatile T &t) {
+    return to_printable(const_cast<const T &>(t));
+  }
 
   template<typename T>
   std::string to_printable(T begin, T end) {

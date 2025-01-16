@@ -68,7 +68,7 @@ namespace mettle {
     public:
       template<typename T, typename U>
       each_impl(T begin, T end, U &&meta_matcher) {
-        static_assert(is_matcher_v<decltype(meta_matcher(*begin))>,
+        static_assert(any_matcher<decltype(meta_matcher(*begin))>,
                       "meta_matcher must be a function that returns a matcher");
         for(; begin != end; ++begin)
           matchers_.push_back(meta_matcher(*begin));
@@ -290,13 +290,13 @@ namespace mettle {
         using std::begin, std::end;
         return std::is_permutation(
           begin(actual), end(actual),
-          begin(container_.value), end(container_.value)
+          begin(unwrap_capture(container_)), end(unwrap_capture(container_))
         );
       }
 
       std::string desc() const {
         std::ostringstream ss;
-        ss << "permutation of " << to_printable(container_.value);
+        ss << "permutation of " << to_printable(unwrap_capture(container_));
         return ss.str();
       }
     private:
@@ -314,15 +314,15 @@ namespace mettle {
         using std::begin, std::end;
         return std::is_permutation(
           begin(actual), end(actual),
-          begin(container_.value), end(container_.value),
+          begin(unwrap_capture(container_)), end(unwrap_capture(container_)),
           predicate_
         );
       }
 
       std::string desc() const {
         std::ostringstream ss;
-        ss << "permutation of " << to_printable(container_.value) << " for "
-           << to_printable(predicate_);
+        ss << "permutation of " << to_printable(unwrap_capture(container_))
+           << " for " << to_printable(predicate_);
         return ss.str();
       }
     private:

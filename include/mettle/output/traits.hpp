@@ -1,58 +1,42 @@
 #ifndef INC_METTLE_OUTPUT_TRAITS_HPP
 #define INC_METTLE_OUTPUT_TRAITS_HPP
 
-#include <cstdint>
+#include <exception>
+#include <iterator>
+#include <ostream>
 #include <type_traits>
 
 namespace mettle {
+  template<typename T> constexpr bool is_character = false;
+  template<typename T>
+  constexpr bool is_character<const T> = is_character<T>;
+  template<typename T>
+  constexpr bool is_character<volatile T> = is_character<T>;
+  template<typename T>
+  constexpr bool is_character<const volatile T> = is_character<T>;
 
-  namespace detail {
-    template<typename T>
-    struct is_any_char_helper : std::false_type {};
-
-    template<> struct is_any_char_helper<char> : std::true_type {};
-    template<> struct is_any_char_helper<signed char> : std::true_type {};
-    template<> struct is_any_char_helper<unsigned char> : std::true_type {};
-
-    template<> struct is_any_char_helper<wchar_t> : std::true_type {};
-    template<> struct is_any_char_helper<char16_t> : std::true_type {};
-    template<> struct is_any_char_helper<char32_t> : std::true_type {};
-  }
+  template<> constexpr bool is_character<char> = true;
+  template<> constexpr bool is_character<wchar_t> = true;
+  template<> constexpr bool is_character<char8_t> = true;
+  template<> constexpr bool is_character<char16_t> = true;
+  template<> constexpr bool is_character<char32_t> = true;
 
   template<typename T>
-  struct is_any_char : detail::is_any_char_helper<std::remove_cv_t<T>> {};
+  concept character = is_character<T>;
 
   template<typename T>
-  using is_exception = std::is_base_of<std::exception, T>;
-
-  template<typename, typename = std::void_t<>>
-  struct is_printable : std::false_type {};
+  concept any_exception = std::derived_from<T, std::exception>;
 
   template<typename T>
-  struct is_printable<T, std::void_t<
-    decltype(std::declval<std::ostream&>() << std::declval<T>())
-  >> : std::true_type {};
-
-  template<typename, typename = std::void_t<>>
-  struct is_iterable : std::false_type {};
+  concept iterable = requires(T &t) {
+    std::begin(t);
+    std::end(t);
+  };
 
   template<typename T>
-  struct is_iterable<T, std::void_t<
-    decltype(std::begin(std::declval<T&>()), std::end(std::declval<T&>()))
-  >> : std::true_type {};
-
-
-  template<typename T>
-  inline constexpr bool is_any_char_v = is_any_char<T>::value;
-
-  template<typename T>
-  inline constexpr bool is_exception_v = is_exception<T>::value;
-
-  template<typename T>
-  inline constexpr bool is_iterable_v = is_iterable<T>::value;
-
-  template<typename T>
-  inline constexpr bool is_printable_v = is_printable<T>::value;
+  concept printable = requires(std::ostream &os, T &t) {
+    os << t;
+  };
 
 } // namespace mettle
 

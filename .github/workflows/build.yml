@@ -23,12 +23,6 @@ jobs:
       matrix:
         include:
           # GCC builds
-          - {os: ubuntu-20.04, compiler: gcc, version:   '7',
-             flags: '-Wsuggest-override'}
-          - {os: ubuntu-20.04, compiler: gcc, version:   '8',
-             flags: '-Wsuggest-override'}
-          - {os: ubuntu-latest, compiler: gcc, version:  '9',
-             flags: '-Wsuggest-override'}
           - {os: ubuntu-latest, compiler: gcc, version: '10',
              flags: '-Wsuggest-override'}
           - {os: ubuntu-latest, compiler: gcc, version: '11',
@@ -37,9 +31,10 @@ jobs:
              flags: '-Wsuggest-override'}
           - {os: ubuntu-latest, compiler: gcc, version: '13',
              flags: '-Wsuggest-override'}
+          - {os: ubuntu-24.04,  compiler: gcc, version: '14',
+             flags: '-Wsuggest-override'}
 
           # Clang builds
-          - {os: ubuntu-20.04,  compiler: clang, version:  '9'}
           - {os: ubuntu-20.04,  compiler: clang, version: '10'}
           - {os: ubuntu-20.04,  compiler: clang, version: '11'}
           - {os: ubuntu-20.04,  compiler: clang, version: '12'}
@@ -47,58 +42,52 @@ jobs:
           - {os: ubuntu-latest, compiler: clang, version: '14'}
           - {os: ubuntu-latest, compiler: clang, version: '15'}
           - {os: ubuntu-latest, compiler: clang, version: '16'}
+          - {os: ubuntu-latest, compiler: clang, version: '17'}
+          - {os: ubuntu-latest, compiler: clang, version: '18'}
 
           # Windows builds
-          - {os: windows-2019,   compiler: msvc, version: '14.1',  # VS 2017
-             boost-version: '1.80.0'}
-          - {os: windows-2019,   compiler: msvc, version: '14.2',  # VS 2019
-             boost-version: '1.80.0'}
-          - {os: windows-latest, compiler: msvc, version: '14.3',  # VS 2022
+          - {os: windows-latest, compiler: msvc, version: '14.4',  # VS 2022
              boost-version: '1.80.0'}
 
           # macOS builds
-          # FIXME: Remove -Wno-deprecated flag.
-          - {os: macos-latest, compiler: clang, flags: '-Wno-deprecated'}
+          - {os: macos-latest, compiler: clang}
 
-          # Boost 1.58 builds
-          # (Test 1.58 specifically because it has very strict rules for
-          # Boost.Variant.)
-          - {os: ubuntu-latest, compiler: gcc, version: '13',
-             boost-version: '1.58.0'}
+          # Boost 1.67 builds (our minimum required Boost)
+          - {os: ubuntu-24.04, compiler: gcc, version: '14',
+             boost-version: '1.67.0'}
 
           # NDEBUG builds
-          - {os: ubuntu-latest, compiler: gcc, version: '13',
+          - {os: ubuntu-24.04, compiler: gcc, version: '14',
              flags: '-Wsuggest-override -DNDEBUG', extra-desc: 'NDEBUG'}
-          - {os: ubuntu-latest, compiler: clang, version: '16',
+          - {os: ubuntu-latest, compiler: clang, version: '18',
              flags: '-DNDEBUG', extra-desc: 'NDEBUG'}
           - {os: windows-latest, compiler: msvc, flags: '/DNDEBUG',
-             version: '14.3', boost-version: '1.80.0', extra-desc: 'NDEBUG'}
-          # FIXME: Remove -Wno-deprecated flag.
-          - {os: macos-latest, compiler: clang,
-             flags: '-Wno-deprecated -DNDEBUG', extra-desc: 'NDEBUG'}
+             version: '14.4', boost-version: '1.80.0', extra-desc: 'NDEBUG'}
+          - {os: macos-latest, compiler: clang, flags: '-DNDEBUG',
+             extra-desc: 'NDEBUG'}
 
-          # C++20 builds
-          - {os: ubuntu-latest, compiler: gcc, version: '13',
-             options: '--std=c++20', flags: '-Wsuggest-override',
-             boost-version: '1.78.0', extra-desc: 'c++20'}
-          - {os: ubuntu-latest, compiler: clang, version: '16',
-             options: '--std=c++20', boost-version: '1.78.0',
-             extra-desc: 'c++20'}
+          # C++23 builds
+          - {os: ubuntu-24.04, compiler: gcc, version: '14',
+             options: '--std=c++23', flags: '-Wsuggest-override',
+             boost-version: '1.85.0', extra-desc: 'c++23'}
+          - {os: ubuntu-latest, compiler: clang, version: '18',
+             options: '--std=c++2b', boost-version: '1.85.0',
+             extra-desc: 'c++23'}
 
           # Make-backend builds
-          - {os: ubuntu-latest, compiler: gcc, version: '13',
+          - {os: ubuntu-24.04, compiler: gcc, version: '14',
              backend: 'make', flags: '-Wsuggest-override'}
-          - {os: ubuntu-latest, compiler: clang, version: '16',
+          - {os: ubuntu-latest, compiler: clang, version: '18',
              backend: 'make'}
       fail-fast: false
     env:
       COMMONFLAGS: '-Wall -Wextra -pedantic -Werror'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Cache Boost binaries
         if: startsWith(matrix.os, 'windows-') && matrix.boost-version
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-boost
         with:
           path: C:\boost-${{ matrix.boost-version }}
@@ -106,7 +95,7 @@ jobs:
             ${{ matrix.os }}-boost-${{ matrix.boost-version }}-msvc-${{
             matrix.version }}-${{ hashFiles('.github/workflows/build.yml') }}
       - name: Set up Python 3.10
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Install Python dependencies
@@ -137,7 +126,9 @@ jobs:
       - name: Install macOS dependencies
         if: startsWith(matrix.os, 'macos-')
         run: |
-          brew install ninja pkg-config boost
+          brew install boost ninja pkg-config
+          echo "CPATH=/opt/homebrew/include" >> ${GITHUB_ENV}
+          echo "LIBRARY_PATH=/opt/homebrew/lib" >> ${GITHUB_ENV}
           echo "CXXFLAGS=${COMMONFLAGS} ${{ matrix.flags }}" >> ${GITHUB_ENV}
       - name: Install Boost ${{ matrix.boost-version }} from source
         if: "!startsWith(matrix.os, 'windows-') && matrix.boost-version"
@@ -156,7 +147,7 @@ jobs:
         if: startsWith(matrix.os, 'windows-') && matrix.boost-version
         run: |
           ${boostroot} = "C:\boost-${{ matrix.boost-version }}"
-          ${msvcver} = "${{ matrix.version }}" -replace '(\d+\.\d).*','$1'
+          ${msvcver} = "${{ matrix.version }}" -replace '14.4','14.3'
           if ("${{ steps.cache-boost.outputs.cache-hit }}" -ne "true" ) {
             ${boost_ver} = "${{ matrix.boost-version }}" -replace '\.','_'
             ${boostexe} = "boost_${boost_ver}-msvc-${msvcver}-64.exe"
