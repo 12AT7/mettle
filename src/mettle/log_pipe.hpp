@@ -43,7 +43,7 @@ namespace mettle::log {
                              read_string( std::move(data.at("message"))) );
       } else if(event == "failed_file") {
         logger_.failed_file(
-          {read_string( std::move(data.at("file")) ), file_uid_},
+          {file_uid_, read_string( std::move(data.at("file_name")) )},
           read_string( std::move(data.at("message")) )
         );
       }
@@ -52,7 +52,7 @@ namespace mettle::log {
     std::vector<std::string> read_suites(bencode::data &&suites) {
       std::vector<std::string> result;
       for(auto &&i : std::get<bencode::list>(suites))
-        result.push_back(std::move( std::get<bencode::string>(i) ));
+        result.push_back( read_string(std::move(i)) );
       return result;
     }
 
@@ -65,17 +65,19 @@ namespace mettle::log {
         std::get<bencode::integer>(data.at("id"))
       );
       return {
+        id,
         read_suites( std::move(data.at("suites")) ),
-        std::move(std::get<bencode::string>( data.at("test") )),
-        id
+        read_string( std::move(data.at("test")) ),
+        read_string( std::move(data.at("file_name")) ),
+        read_line( std::move(data.at("line")) ),
       };
     }
 
     log::test_output read_test_output(bencode::data &&output) {
       auto &data = std::get<bencode::dict>(output);
       return log::test_output{
-        std::move(std::get<bencode::string>( data.at("stdout_log") )),
-        std::move(std::get<bencode::string>( data.at("stderr_log") ))
+        read_string( std::move(data.at("stdout_log")) ),
+        read_string( std::move(data.at("stderr_log")) )
       };
     }
 
@@ -85,6 +87,10 @@ namespace mettle::log {
 
     std::string read_string(bencode::data &&message) {
       return std::move(std::get<bencode::string>(message));
+    }
+
+    std::uint_least32_t read_line(bencode::data &&line) {
+      return static_cast<std::uint_least32_t>(std::get<bencode::integer>(line));
     }
 
     log::file_logger &logger_;

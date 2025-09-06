@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <locale>
 #include <iomanip>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -20,6 +21,19 @@ namespace mettle {
 
   template<typename T>
   std::string to_printable(T begin, T end);
+
+  // Fallback implementation. Try to print various types in a reasonable way.
+
+  template<typename T>
+  inline decltype(auto) to_printable(const T &t) {
+    if constexpr(printable<T>) {
+      return t;
+    } else if constexpr(iterable<T>) {
+      return to_printable(std::begin(t), std::end(t));
+    } else {
+      return type_name<T>();
+    }
+  }
 
   // Non-generic overloads
 
@@ -149,25 +163,24 @@ namespace mettle {
     return to_printable(std::begin(t), std::end(t));
   }
 
-  // Fallback implementation. Try to print various types in a reasonable way.
-
-  template<typename T>
-  inline auto to_printable(const T &t) {
-    if constexpr(printable<T>) {
-      return t;
-    } else if constexpr(any_exception<T>) {
-      std::ostringstream ss;
-      ss << type_name(t) << "(" << to_printable(t.what()) << ")";
-      return ss.str();
-    } else if constexpr(iterable<T>) {
-      return to_printable(std::begin(t), std::end(t));
-    } else {
-      return type_name<T>();
-    }
-  }
-
   // These need to be last in order for the `to_printable()` calls inside to
   // pick up all the above implementations (plus any others via ADL).
+
+  template<typename T>
+  std::string to_printable(const std::optional<T> &t) {
+    if(!t)
+      return "std::nullopt";
+    std::ostringstream ss;
+    ss << "std::optional(" << to_printable(*t) << ")";
+    return ss.str();
+  }
+
+  template<any_exception T>
+  std::string to_printable(const T &t) {
+    std::ostringstream ss;
+    ss << type_name(t) << "(" << to_printable(t.what()) << ")";
+    return ss.str();
+  }
 
   template<typename T>
   inline auto to_printable(const volatile T &t) {

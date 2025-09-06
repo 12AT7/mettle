@@ -351,6 +351,7 @@ suite<> test_matchers("matchers", [](auto &_) {
       expect(123, any(1, 2, 123));
       expect(123, is_not(any(1, 2, 3)));
       expect(123, is_not(any()));
+      expect(123, is_not(any(equal_to(1), equal_to(2), equal_to(3))));
 
       auto m = equal_to(123);
       expect(123, any(m));
@@ -366,6 +367,7 @@ suite<> test_matchers("matchers", [](auto &_) {
       expect(123, all(123));
       expect(123, all(not_equal_to(1), not_equal_to(2), greater(3)));
       expect(123, all());
+      expect(123, is_not(all(not_equal_to(1), not_equal_to(123), greater(3))));
 
       auto m = equal_to(123);
       expect(123, all(m));
@@ -381,6 +383,7 @@ suite<> test_matchers("matchers", [](auto &_) {
       expect(123, none(1));
       expect(123, none(equal_to(1), equal_to(2), less(3)));
       expect(123, none());
+      expect(123, is_not(none(equal_to(1), equal_to(123), less(3))));
 
       auto m = equal_to(1);
       expect(123, none(m));
@@ -390,6 +393,36 @@ suite<> test_matchers("matchers", [](auto &_) {
       expect(none(1, msg_matcher(true))(2).message, equal_to("message"));
       expect(none(1, msg_matcher(true, ""))(2).message, equal_to(""));
       expect(none(1, is_not(msg_matcher(true)))(2).message, equal_to(""));
+    });
+  });
+
+  subsuite<>(_, "memory", [](auto &_) {
+    _.test("dereferenced()", []() {
+      int i = 1;
+      expect(&i, dereferenced(1));
+      expect(&i, is_not(dereferenced(2)));
+      expect(static_cast<int*>(nullptr), is_not(dereferenced(1)));
+
+      auto ui = std::make_unique<int>(1);
+      expect(ui, dereferenced(1));
+      expect(ui, is_not(dereferenced(2)));
+      ui.reset();
+      expect(ui, is_not(dereferenced(1)));
+
+      std::optional<int> oi = {1};
+      expect(oi, dereferenced(1));
+      expect(oi, is_not(dereferenced(2)));
+      oi.reset();
+      expect(oi, is_not(dereferenced(1)));
+
+      expect(dereferenced(123).desc(), equal_to("-> 123"));
+      expect(dereferenced(123)(&i).message, equal_to("-> 1"));
+      expect(dereferenced(123)(static_cast<int*>(nullptr)).message,
+             equal_to("-> nullptr"));
+      expect(dereferenced(msg_matcher(true))(&i).message,
+             equal_to("-> message"));
+      expect(dereferenced(msg_matcher(true, ""))(&i).message,
+             equal_to("-> 1"));
     });
   });
 

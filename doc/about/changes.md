@@ -10,16 +10,20 @@ in progress
 - `expect` now takes a universal reference for the value to test to support
   matchers which need access to non-const objects (e.g. to call a non-const
   member function)
-- New matchers `in_interval` and `exception_what`
+- New matchers `dereferenced`, `exception_what`, and `in_interval`
 - Add support for `char8_t`
+- xUnit test output now includes file and line number in `<testcase>` tags
 
 ### Bug fixes
+- `none` matcher now reports failed matches as expected
 - Test failures across multiple runs are now correctly grouped in the summary
   results
 - `bencode.hpp` is now installed alongside mettle when `--vendorize` is used
 - Arithmetic matchers now use ADL to find `max` and `abs`, allowing custom
   arithmetic types to use their own implementations of these functions
 - Print strings with unusual character types as an array of characters
+- Class types that are convertible to `bool` are now printed correctly
+- Allow expectations using non-copyable types
 
 ### Breaking changes
 - Implementation updated to require C++20

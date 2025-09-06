@@ -48,7 +48,7 @@ namespace mettle::posix {
     }
 
     [[noreturn]] void
-    child_failed(int fd, const std::string &file) {
+    child_failed(int fd, const std::string &file_name) {
       auto err = err_string(errno);
 
       try {
@@ -56,9 +56,10 @@ namespace mettle::posix {
         io::stream<io::file_descriptor_sink> stream(
           fd, io::never_close_handle
         );
+        stream.exceptions(stream.failbit | stream.badbit);
         bencode::encode(stream, bencode::dict_view{
           {"event", "failed_file"},
-          {"file", file},
+          {"file_name", file_name},
           {"message", err}
         });
         stream.flush();
@@ -121,6 +122,7 @@ namespace mettle::posix {
         io::stream<io::file_descriptor_source> fds(
           message_pipe.read_fd, io::never_close_handle
         );
+        fds.exceptions(fds.failbit | fds.badbit);
         while(fds.peek() != EOF)
           logger(fds);
       } catch(...) {
